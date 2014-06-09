@@ -1,1 +1,1 @@
-node lrc_prase.js 夜空中最亮的星.lrc
+node ../lrc_prase.js 夜空中最亮的星.lrc
