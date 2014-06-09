@@ -155,7 +155,7 @@ body {
 	<div id="controls">
 		<div id="play">Play</div>
 	</div>
-	<audio id="music" loop="true" preload="true" src="夜空中最亮的星.mp3"></audio>
+	<audio id="music" preload="true" src="夜空中最亮的星.mp3"></audio>
 </div>
 <script>
 // 根据歌曲实际进度显示歌词
@@ -222,6 +222,7 @@ function stopPlay() {
 	clearInterval(t2);
 }
 var started = false;
+// todo: 支持暂停/继续，考虑如何保存/恢复进度。
 var play = document.getElementById("play"),
 	music = document.getElementById("music");
 play.onclick = function () {
