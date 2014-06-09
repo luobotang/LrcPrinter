@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<script src="output.json"></script>
+<script src="lrc_print.js"></script>
+<style>
+body, div, p, img {
+	margin: 0;
+	padding: 0;
+}
+body {
+	font: 16px "微软雅黑";
+}
+#player_wrap {
+	margin: 100px auto;
+	padding: 0;
+	position: relative;
+	width: 500px;
+}
+#player_wrap #music_info {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 200px;
+	margin: 0;
+	padding: 0;
+	height: 250px;
+	border: 1px solid #ccc;
+	border-right: none;
+}
+
+#player_wrap #music_info #artist_img {
+	padding: 10px;
+}
+#player_wrap #music_info #artist_img img {
+	width: 100%;
+}
+#player_wrap #music_info p {
+	font-size: 80%;
+	line-height: 1.5em;
+	padding: 0 2em;
+}
+.lyc {
+	border: 1px solid #ccc;
+	line-height: 1.5em;
+	height: 250px;
+	width: 300px;
+	overflow: auto;
+	padding: 0;
+	position: absolute;
+	left: 200px;
+	top: 0;
+	text-align: center;
+}
+.lyc p {
+	color: #999;
+	margin: 0;
+	padding: 0;
+}
+.lyc p:nth-child(1) {
+	margin-top: 50px;
+}
+.lyc p:last-child {
+	margin-bottom: 50px;
+}
+.lyc .em {
+	color: rgb(76,158,217);
+	font-size: 120%;
+	transition: all 0.5s;
+}
+#time {
+	position: absolute;
+	top: 270px;
+	left: 0;
+	margin: 0;
+	padding: 0 10px;
+	width: 480px;
+	font: 10px Arial;
+	height: 1em;
+	line-height: 1em;
+}
+#time #passed_time {
+	float: left;
+}
+#time #total_time {
+	float: right;
+}
+#progress {
+	position: absolute;
+	top: 300px;
+	margin: 0 auto;
+	padding: 0;
+	width: 500px;
+	height: 8px;
+	border-radius: 4px;
+	border: 1px solid #ccc;
+	background-color: #eee;
+}
+#progress_bar {
+	margin: 0;
+	padding: 0;
+	float: left;
+	height: 8px;
+	width: 0%;
+	background-color: rgb(76,158,217);
+}
+#controls {
+	position: absolute;
+	top: 330px;
+	left: 0;
+}
+#controls #play {
+	width: 40px;
+	height: 40px;
+	border: 1px solid #ccc;
+	border-radius: 20px;
+	text-align: center;
+	line-height: 40px;
+	font-size: 10px;
+}
+#controls #play:hover {
+	background-color: rgb(76,158,217);
+	border-color: rgb(50,150,230);
+	cursor: pointer;
+	color: white;
+}
+#controls #play.stoped {
+	background-color: #666;
+	border: none;
+	color: white;
+}
+#controls #play.stoped:hover {
+	cursor: wait;
+}
+</style>
+</head>
+<body>
+<div id="player_wrap">
+	<div id="music_info">
+		<div id="artist_img">
+			<img src="逃跑计划.jpg"></img>
+		</div>
+		<p>逃跑计划</p>
+		<p>夜空中最亮的星</p>
+	</div>
+	<div id="lyc" class="lyc"></div>
+	<div id="time">
+		<div id="passed_time">0:0</div>
+		<div id="total_time">3:00</div>
+	</div>
+	<div id="progress">
+		<div id="progress_bar"></div>
+	</div>
+	<div id="controls">
+		<div id="play">Play</div>
+	</div>
+	<audio id="music" loop="true" preload="true" src="夜空中最亮的星.mp3"></audio>
+</div>
+<script>
+// 根据歌曲实际进度显示歌词
+function startPrintLyc(lyc) {
+	var eleLyc = document.getElementById("lyc");
+	// 填充歌词
+	eleLyc.innerHTML = lyc["sentences"].map(function (s) {
+		return "<p>" + s[1] + "</p>";
+	}).join("");
+	printLyc(lyc, function (sentente, time, index) {
+		var p = eleLyc.querySelector("p:nth-child(" + index + ")"),
+			prevP = eleLyc.querySelector("p:nth-child(" + (index - 1) + ")");
+		if (prevP) prevP.className = "passed";
+		p.classList.add("em");
+		// 移动歌词显示区域，尽量让歌词居中显示。
+		var minTop = 120;
+		eleLyc.scrollTop = p.offsetTop > minTop ? p.offsetTop - minTop : 0;
+	});
+}
+var t1, t2;
+// 时间进度
+function startProgress(totalTimeInSecond) {
+	var passed_time = document.getElementById("passed_time"),
+		total_time = document.getElementById("total_time"),
+		start_time = Date.now(),
+		progress = 0,
+		total = 100,
+		progress_bar = document.getElementById("progress_bar");
+	total_time.innerHTML = toFormatedTime(totalTimeInSecond * 1000);
+	t1 = setInterval(function () {
+		var time_passed = Date.now() - start_time;
+		if (time_passed >= totalTimeInSecond * 1000) {
+			clearInterval(t1);
+			return;
+		}
+		passed_time.innerHTML = toFormatedTime(time_passed);
+	}, 100);
+
+	var interval = totalTimeInSecond * 10; // 每次更新1%，据此计算间隔
+	progress_bar.style.transition = "width " + interval + "ms linear 0s";
+	t2 = setInterval(function () {
+		if (progress >= 100) {
+			clearInterval(t2);
+		} else {
+			progress_bar.style.width = ++progress + "%";
+		}
+	}, interval);
+
+	function toFormatedTime(time) {
+		var min = Math.floor(time / 60000),
+			sec = (time % 60000) / 1000;
+		return min + ":" + (sec < 10 ? "0" + sec.toFixed(1) : sec.toFixed(1));
+	}
+}
+function startPlay() {
+	music.play();
+	startPrintLyc(lyc);
+	startProgress(244);
+}
+function stopPlay() {
+	stopPrint();
+	music.pause();
+	clearInterval(t1);
+	clearInterval(t2);
+}
+var started = false;
+var play = document.getElementById("play"),
+	music = document.getElementById("music");
+play.onclick = function () {
+	if (!started) {
+		started = true;
+		startPlay();
+		play.innerHTML = "Stop";
+	} else {
+		started = false;
+		stopPlay();
+		play.classList.add("stoped");
+		play.onclick = null;
+	}
+};
+</script>
+</body>
+</html>
